@@ -47,14 +47,14 @@ void top_clone_distances(std::ostream& stream, sequences::sequences_type const& 
 		}
 	}
 
-	stream << "\t\tTop\t" << top_clone->rearrangement << " (" << top_clone->reads << " reads)" << std::endl;
+	stream << "\t\tTop\t" << top_clone << std::endl;
 
 	std::size_t result(0);
 	for(auto const& distance: distances)
 	{
 		if(++ result < limit)
 		{
-			stream << "\t\t" << distance.first << "\t" << distance.second->rearrangement << " (" << distance.second->reads << " reads)" << std::endl;
+			stream << "\t\t" << distance.first << "\t" << distance.second << std::endl;
 		}
 		else
 		{

@@ -5,6 +5,7 @@
     <ClCompile Include="windows.cpp" />
     <ClCompile Include="immunoseq.cpp" />
     <ClCompile Include="edit_distance.cpp" />
+    <ClCompile Include="sequences.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="windows.hpp" />

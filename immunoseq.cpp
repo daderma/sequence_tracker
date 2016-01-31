@@ -42,7 +42,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 
 	std::map<std::string, std::size_t> header;
 	std::string row;
-	std::int64_t counter(0);
+	std::int64_t sequence_id(0);
 	while(std::getline(stream, row))
 	{
 		std::vector<std::string> columns;
@@ -71,12 +71,11 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 			}
 		}
 
-		++ counter;
 		if(columns.size() != header.size())
 		{
 			BOOST_THROW_EXCEPTION(load_exception() 
 				<< load_description_type("number of columns does not match header")
-				<< load_row_type(counter));
+				<< load_row_type(sequence_id));
 		}
 		
 		auto const rearrangement_type(columns[header[rearrangement_type_field]]);
@@ -85,7 +84,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 			/*BOOST_THROW_EXCEPTION(load_exception() 
 				<< load_description_type("unsupported rearrangement type: " + columns[header[rearrangement_type_field]])
 				<< load_row_type(row));*/
-			std::cout << "Warning! Reading rearrangement type \"" << rearrangement_type << "\" at row " << counter << std::endl;
+			std::cout << "Warning! Reading rearrangement type \"" << rearrangement_type << "\" at row " << sequence_id << std::endl;
 		}
 
 		auto const sample_id(columns[header[sample_name_field]]);
@@ -110,6 +109,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 		}
 
 		auto sequence(std::make_shared<sequences::sequence_type>());
+		sequence->id = ++ sequence_id;
 		sequence->rearrangement = columns[header[rearrangement_field]];
 		sequence->reads = boost::lexical_cast<std::size_t>(columns[header[reads_field]]);
 		sequence->v_family = columns[header[v_family_field]];

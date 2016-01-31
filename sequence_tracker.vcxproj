@@ -86,6 +86,7 @@
     <ClCompile Include="immunoseq.cpp" />
     <ClCompile Include="edit_distance.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="sequences.cpp" />
     <ClCompile Include="windows.cpp" />
   </ItemGroup>
   <ItemGroup>
