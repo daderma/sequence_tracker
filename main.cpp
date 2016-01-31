@@ -29,7 +29,7 @@ void try_directory(boost::filesystem::path const& directory, samples::samples_ty
 }
 
 
-typedef std::multimap<std::size_t, sequences::sequence_ptr_type> distances_type;
+typedef std::multimap<std::pair<std::size_t, std::int64_t>, sequences::sequence_ptr_type> distances_type;
 std::size_t const maximum_distance(2);
 
 
@@ -75,13 +75,14 @@ void next_iteration(distances_type const& previous, sequences::sequences_type co
 	{
 		if(i.second <= maximum_distance)
 		{
-			next.insert(std::make_pair(i.second, i.first));
+			next.insert(std::make_pair(std::make_pair(i.second, i.first->id), i.first));
 		}
 	}
 }
 
 
-void process(samples::samples_type const& samples, samples::sample_ptr_type const& parent, distances_type const& previous, std::string const report, std::size_t depth)
+typedef std::vector<samples::sample_ptr_type> stack_type;
+void process(samples::samples_type const& samples, samples::sample_ptr_type const& parent, distances_type const& previous, std::string const& report, stack_type& stack)
 {
 	for(auto const& current: samples)
 	{
@@ -112,7 +113,8 @@ void process(samples::samples_type const& samples, samples::sample_ptr_type cons
 			continue;
 		}
 
-		for(std::size_t i(0); i < depth; ++ i)
+		stack.push_back(current.second);
+		for(std::size_t i(0); i < stack.size(); ++ i)
 		{
 			std::cout << "\t";
 		}
@@ -126,21 +128,25 @@ void process(samples::samples_type const& samples, samples::sample_ptr_type cons
 		buffer << current.second->sequences.size() << " sequences from sample " << current.first << std::endl;
 		for(auto const& distance: next)
 		{
-			buffer << "\t" << distance.first << "\t" << distance.second << std::endl;
+			buffer << "\t" << distance.first.first << "\t" << distance.second << std::endl;
 		}
 
-		boost::filesystem::ofstream stream;
-		if(parent)
+		std::string filename;
+		for(auto const& iteration: stack)
 		{
-			stream.open("iter_" + current.first + "_from_" + parent->id + ".txt", std::ios::trunc);
+			if(filename.empty())
+			{
+				filename = iteration->id;
+			}
+			else
+			{
+				filename += "_" + iteration->id;
+			}
 		}
-		else
-		{
-			stream.open("iter_" + current.first + ".txt", std::ios::trunc);
-		}
+		boost::filesystem::ofstream stream(filename + ".txt", std::ios::trunc);
 		stream << buffer.str();
-
-		process(samples, current.second, next, buffer.str(), depth + 1);
+		process(samples, current.second, next, buffer.str(), stack);
+		stack.pop_back();
 	}
 }
 
@@ -169,7 +175,8 @@ int main(int argc, char* argv[])
 		std::cout << "Performing iterative analysis:" << std::endl;
 		distances_type previous;
 		std::string report;
-		process(samples, samples::sample_ptr_type(), previous, report, 1);
+		stack_type stack;
+		process(samples, samples::sample_ptr_type(), previous, report, stack);
 
 		return 0;
 	}
