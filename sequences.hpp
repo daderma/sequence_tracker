@@ -2,11 +2,8 @@
 #define SEQUENCE_TRACKER__SEQUENCES_HPP
 
 
-#include <cstdint>
-#include <memory>
+#include "rearrangements.hpp"
 #include <vector>
-#include <string>
-#include <ostream>
 
 
 namespace sequences
@@ -16,7 +13,7 @@ namespace sequences
 struct sequence_type
 {
 	std::int64_t id;
-	std::string rearrangement;
+	rearrangements::rearrangement_ptr_type rearrangement;
 	std::size_t reads;
 	std::string v_family;
 	std::string d_family;

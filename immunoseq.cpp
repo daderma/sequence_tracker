@@ -40,9 +40,11 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 
 	boost::filesystem::ifstream stream(path);
 
+	rearrangements::rearrangements_type rearrangements;
+	std::int64_t sequence_id(0);
+
 	std::map<std::string, std::size_t> header;
 	std::string row;
-	std::int64_t sequence_id(0);
 	while(std::getline(stream, row))
 	{
 		std::vector<std::string> columns;
@@ -108,15 +110,25 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 			patient->samples[std::make_pair(timestamp, sample_id)] = sample;
 		}
 
+		auto& rearrangement(rearrangements[columns[header[rearrangement_field]]]);
+		if(!rearrangement)
+		{
+			rearrangement = std::make_shared<rearrangements::rearrangement_type>();
+			rearrangement->id = rearrangements.size();
+			rearrangement->nucleotides = columns[header[rearrangement_field]];
+		}
+
 		auto sequence(std::make_shared<sequences::sequence_type>());
 		sequence->id = ++ sequence_id;
-		sequence->rearrangement = columns[header[rearrangement_field]];
+		sequence->rearrangement = rearrangement;
 		sequence->reads = boost::lexical_cast<std::size_t>(columns[header[reads_field]]);
 		sequence->v_family = columns[header[v_family_field]];
 		sequence->d_family = columns[header[d_family_field]];
 		sequence->j_family = columns[header[j_family_field]];
 		sample->sequences.push_back(sequence);
 	}
+
+	std::cout << "Processed " << rearrangements.size() << " unique rearrangements in " << sequence_id << " sequences" << std::endl;
 }
 
 

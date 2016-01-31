@@ -27,38 +27,52 @@ void try_directory(boost::filesystem::path const& directory, patients::patients_
 }
 
 
-void top_clone_distances(std::ostream& stream, sequences::sequences_type const& sequences, std::size_t const& limit)
+typedef std::multimap<std::size_t, sequences::sequence_ptr_type> distances_type;
+
+
+void next_iteration(distances_type const& previous, sequences::sequences_type const& current, std::size_t const& maximum_distance, distances_type& next)
 {
-	sequences::sequence_ptr_type top_clone;
-	for(auto const& sequence: sequences)
+	std::map<sequences::sequence_ptr_type, std::size_t> inverse;
+
+	if(previous.empty())
 	{
-		if(!top_clone || top_clone->reads < sequence->reads)
+		sequences::sequence_ptr_type top;
+		for(auto const& c: current)
 		{
-			top_clone = sequence;
+			if(!top || top->reads < c->reads)
+			{
+				top = c;
+			}
+		}
+
+		for(auto const& c: current)
+		{
+			inverse[c] = edit_distance::levenshtein(top->rearrangement->nucleotides, c->rearrangement->nucleotides);
 		}
 	}
-	
-	std::multimap<std::size_t, sequences::sequence_ptr_type> distances;
-	for(auto const& sequence: sequences)
+	else
 	{
-		if(sequence != top_clone)
+		for(auto const& p: previous)
 		{
-			distances.insert(std::make_pair(edit_distance::levenshtein(top_clone->rearrangement, sequence->rearrangement), sequence));
+			for(auto const& c: current)
+			{
+				if(inverse.count(c))
+				{
+					inverse[c] = std::min(inverse[c], edit_distance::levenshtein( p.second->rearrangement->nucleotides, c->rearrangement->nucleotides));
+				}
+				else
+				{
+					inverse[c] = edit_distance::levenshtein( p.second->rearrangement->nucleotides, c->rearrangement->nucleotides);
+				}
+			}
 		}
 	}
 
-	stream << "\t\tTop\t" << top_clone << std::endl;
-
-	std::size_t result(0);
-	for(auto const& distance: distances)
+	for(auto const& i: inverse)
 	{
-		if(++ result < limit)
+		if(i.second <= maximum_distance)
 		{
-			stream << "\t\t" << distance.first << "\t" << distance.second << std::endl;
-		}
-		else
-		{
-			break;
+			next.insert(std::make_pair(i.second, i.first));
 		}
 	}
 }
@@ -88,23 +102,28 @@ int main(int argc, char* argv[])
 
 		std::cout << "Creating report";
 
-		std::ofstream output("top-clone.txt", std::ios::trunc);
+		std::ofstream report("iterations.txt", std::ios::trunc);
 		for(auto const& patient: patients)
 		{
-			output << "Patient " << patient.second->id << ":" << std::endl;
-			
-			sequences::sequences_type aggregated;
+			report << "Patient " << patient.second->id << ":" << std::endl;
+
+			distances_type previous;
 			for(auto const& sample: patient.second->samples)
 			{
 				std::cout << ".";
+				
+				report << "\t" << sample.second->sequences.size() << " sequences from sample " << sample.second->id << " dated " << sample.second->timestamp.date() << std::endl;
 
-				output << "\t" << sample.second->sequences.size() << " sequences from sample " << sample.second->id << " dated " << sample.second->timestamp.date() << std::endl;
-				top_clone_distances(output, sample.second->sequences, 20);
-				aggregated.insert(aggregated.end(), sample.second->sequences.begin(), sample.second->sequences.end());
+				distances_type next;
+				next_iteration(previous, sample.second->sequences, 3, next);
+				
+				for(auto const& distance: next)
+				{
+					report << "\t\t" << distance.first << "\t" << distance.second << std::endl;
+				}
+	
+				previous = next;
 			}
-
-			output << "\t" << aggregated.size() << " sequences from all patient samples" << std::endl;
-			top_clone_distances(output, aggregated, 20);
 		}
 
 		std::cout << std::endl;
