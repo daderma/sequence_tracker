@@ -9,26 +9,6 @@
 #include <set>
 
 
-void try_directory(boost::filesystem::path const& directory, samples::samples_type& patients)
-{
-	if(boost::filesystem::is_directory(directory))
-	{
-		boost::filesystem::directory_iterator end;
-		for(boost::filesystem::directory_iterator iter(directory); iter != end; ++ iter)
-		{
-			if(boost::filesystem::is_regular_file(iter->path()) && boost::iequals(iter->path().extension().string(), ".tsv"))
-			{
-				immunoseq::load(iter->path(), patients);	
-			}
-		}
-	}
-	else
-	{
-		std::cout << "Not a directory: " << directory << std::endl;
-	}
-}
-
-
 typedef std::multimap<std::pair<std::size_t, std::int64_t>, sequences::sequence_ptr_type> distances_type;
 std::size_t const maximum_distance(2);
 
@@ -82,7 +62,7 @@ void next_iteration(distances_type const& previous, sequences::sequences_type co
 
 
 typedef std::vector<samples::sample_ptr_type> stack_type;
-void process(samples::samples_type const& samples, samples::sample_ptr_type const& parent, distances_type const& previous, std::string const& report, stack_type& stack)
+void process(samples::samples_type const& samples, samples::sample_ptr_type const& parent, distances_type const& previous, std::string const& report, boost::filesystem::path const& directory, stack_type& stack)
 {
 	for(auto const& current: samples)
 	{
@@ -143,10 +123,38 @@ void process(samples::samples_type const& samples, samples::sample_ptr_type cons
 				filename += "_" + iteration->id;
 			}
 		}
-		boost::filesystem::ofstream stream(filename + ".txt", std::ios::trunc);
+		boost::filesystem::ofstream stream(directory / (filename + ".txt"), std::ios::trunc);
 		stream << buffer.str();
-		process(samples, current.second, next, buffer.str(), stack);
+		process(samples, current.second, next, buffer.str(), directory, stack);
 		stack.pop_back();
+	}
+}
+
+
+void try_directory(boost::filesystem::path const& directory)
+{
+	if(boost::filesystem::is_directory(directory))
+	{
+		samples::samples_type samples;
+
+		boost::filesystem::directory_iterator end;
+		for(boost::filesystem::directory_iterator iter(directory); iter != end; ++ iter)
+		{
+			if(boost::filesystem::is_regular_file(iter->path()) && boost::iequals(iter->path().extension().string(), ".tsv"))
+			{
+				immunoseq::load(iter->path(), samples);	
+			}
+		}
+
+		std::cout << "Performing iterative analysis:" << std::endl;
+		distances_type previous;
+		std::string report;
+		stack_type stack;
+		process(samples, samples::sample_ptr_type(), previous, report, directory, stack);
+	}
+	else
+	{
+		std::cout << "Not a directory: " << directory << std::endl;
 	}
 }
 
@@ -155,12 +163,11 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		samples::samples_type samples;
 		if(argc > 1)
 		{
 			for(int i(1); i < argc; ++ i)
 			{
-				try_directory(argv[i], samples);
+				try_directory(argv[i]);
 			}
 		}
 		else
@@ -169,15 +176,11 @@ int main(int argc, char* argv[])
 			std::cout << "samples" << std::endl << "\tproject1.tsv" << std::endl << "\tproject2.tsv" << std::endl << "\tproject3.tsv" << std::endl << "\t..." << std::endl << std::endl;
 			std::cout << "You can pass the directory (i.e. \"samples\" above) containing the files you wish to process on the command line." << std::endl;
 			std::cout << "For now you can manually select a directory to process..." << std::endl;
-			try_directory(windows::select_directory(), samples);
+			try_directory(windows::select_directory());
 		}
-
-		std::cout << "Performing iterative analysis:" << std::endl;
-		distances_type previous;
-		std::string report;
-		stack_type stack;
-		process(samples, samples::sample_ptr_type(), previous, report, stack);
-
+		
+		std::cout << std::endl << "Press (almost) any key to continue." << std::endl;
+		std::cin.get();
 		return 0;
 	}
 
