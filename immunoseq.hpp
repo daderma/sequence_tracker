@@ -2,7 +2,7 @@
 #define SEQUENCE_TRACKER__IMMUNOSEQ_HPP
 
 
-#include "patients.hpp"
+#include "samples.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/exception/all.hpp>
 
@@ -16,7 +16,7 @@ typedef boost::error_info<struct load_description_, std::string> load_descriptio
 typedef boost::error_info<struct load_row_, std::int64_t> load_row_type;
 
 
-void load(boost::filesystem::path const& path, patients::patients_type& patients);
+void load(boost::filesystem::path const& path, samples::samples_type& samples);
 
 
 }	// namespace immunoseq

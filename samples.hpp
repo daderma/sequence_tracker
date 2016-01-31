@@ -14,13 +14,13 @@ namespace samples
 struct sample_type
 {
 	std::string id;
-	boost::posix_time::ptime timestamp;
 	sequences::sequences_type sequences;
+	std::multimap<std::string, std::string> tags;
 };
 
 
 typedef std::shared_ptr<sample_type> sample_ptr_type;
-typedef std::map<std::pair<boost::posix_time::ptime, std::string>, sample_ptr_type> samples_type;
+typedef std::map<std::string, sample_ptr_type> samples_type;
 
 
 }	// namespace samples

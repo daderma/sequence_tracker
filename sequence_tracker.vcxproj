@@ -92,7 +92,6 @@
   <ItemGroup>
     <ClInclude Include="immunoseq.hpp" />
     <ClInclude Include="edit_distance.hpp" />
-    <ClInclude Include="patients.hpp" />
     <ClInclude Include="rearrangements.hpp" />
     <ClInclude Include="sequences.hpp" />
     <ClInclude Include="samples.hpp" />

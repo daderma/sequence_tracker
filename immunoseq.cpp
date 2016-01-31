@@ -8,29 +8,10 @@ namespace immunoseq
 {
 
 
-std::string get_patient_id(std::string const& sample_id)
-{
-	std::string result;
-	for(auto const& c: sample_id)
-	{
-		if(std::isdigit(c))
-		{
-			result += c;
-		}
-		else
-		{
-			return result;
-		}
-	}
-
-	BOOST_THROW_EXCEPTION(load_exception() << load_description_type("unable to extract patient id from sample id: \"" + sample_id + "\""));
-}
-
-
-void load(boost::filesystem::path const& path, patients::patients_type& patients)
+void load(boost::filesystem::path const& path, samples::samples_type& samples)
 {
 	char const* sample_name_field("sample_name");
-	char const* release_date_field("release_date");
+	char const* sample_tags_field("sample_tags");
 	char const* rearrangement_field("rearrangement");
 	char const* rearrangement_type_field("rearrangement_type");
 	char const* reads_field("reads");
@@ -42,7 +23,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 
 	rearrangements::rearrangements_type rearrangements;
 	std::int64_t sequence_id(0);
-
+		
 	std::map<std::string, std::size_t> header;
 	std::string row;
 	while(std::getline(stream, row))
@@ -57,7 +38,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 				header.insert(std::make_pair(column, index ++));
 			}
 
-			if(header.count(sample_name_field) && header.count(release_date_field)
+			if(header.count(sample_name_field) && header.count(sample_tags_field) 
 				&& header.count(rearrangement_field) && header.count(rearrangement_type_field) 
 				&& header.count(reads_field) 
 				&& header.count(v_family_field) && header.count(d_family_field) && header.count(j_family_field)
@@ -86,28 +67,29 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 			/*BOOST_THROW_EXCEPTION(load_exception() 
 				<< load_description_type("unsupported rearrangement type: " + columns[header[rearrangement_type_field]])
 				<< load_row_type(row));*/
-			std::cout << "Warning! Reading rearrangement type \"" << rearrangement_type << "\" at row " << sequence_id << std::endl;
 		}
 
-		auto const sample_id(columns[header[sample_name_field]]);
-		auto const patient_id(get_patient_id(sample_id));
-		auto const timestamp(boost::posix_time::time_from_string(columns[header[release_date_field]]));
-		
-		auto patient(patients[patient_id]);
-		if(!patient)
-		{
-			patient = std::make_shared<patients::patient_type>();
-			patient->id = patient_id;
-			patients[patient_id] = patient;
-		}
-
-		auto sample(patient->samples[std::make_pair(timestamp, sample_id)]);
+		auto& sample(samples[columns[header[sample_name_field]]]);
 		if(!sample)
 		{
 			sample = std::make_shared<samples::sample_type>();
-			sample->id = sample_id;
-			sample->timestamp = timestamp;
-			patient->samples[std::make_pair(timestamp, sample_id)] = sample;
+			sample->id = columns[header[sample_name_field]];
+
+			std::vector<std::string> tags;
+			boost::split(tags, columns[header[sample_tags_field]], boost::is_any_of(","));
+			for(auto const& tag: tags)
+			{
+				std::vector<std::string> key_value;
+				boost::split(key_value, tag, boost::is_any_of(":"));
+				if(key_value.size() == 1)
+				{
+					sample->tags.insert(std::make_pair(key_value[0], ""));
+				}
+				else if(key_value.size() == 2)
+				{
+					sample->tags.insert(std::make_pair(key_value[0], key_value[1]));
+				}
+			}
 		}
 
 		auto& rearrangement(rearrangements[columns[header[rearrangement_field]]]);
