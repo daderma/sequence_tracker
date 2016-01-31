@@ -15,7 +15,7 @@ namespace sequences
 struct sequence_type
 {
 	std::string rearrangement;
-	std::int64_t reads;
+	std::size_t reads;
 	std::string v_family;
 	std::string d_family;
 	std::string j_family;

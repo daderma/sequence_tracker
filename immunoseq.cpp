@@ -111,7 +111,7 @@ void load(boost::filesystem::path const& path, patients::patients_type& patients
 
 		auto sequence(std::make_shared<sequences::sequence_type>());
 		sequence->rearrangement = columns[header[rearrangement_field]];
-		sequence->reads = boost::lexical_cast<std::int64_t>(columns[header[reads_field]]);
+		sequence->reads = boost::lexical_cast<std::size_t>(columns[header[reads_field]]);
 		sequence->v_family = columns[header[v_family_field]];
 		sequence->d_family = columns[header[d_family_field]];
 		sequence->j_family = columns[header[j_family_field]];

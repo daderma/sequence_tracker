@@ -84,11 +84,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="immunoseq.cpp" />
+    <ClCompile Include="edit_distance.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="windows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="immunoseq.hpp" />
+    <ClInclude Include="edit_distance.hpp" />
     <ClInclude Include="patients.hpp" />
     <ClInclude Include="sequences.hpp" />
     <ClInclude Include="samples.hpp" />
