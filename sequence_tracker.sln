@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sequence_tracker", "sequenc
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{F9466F42-37E4-4559-A060-DB522E950C9D}"
 	ProjectSection(SolutionItems) = preProject
-		build.cmd = build.cmd
+		build-dependencies.cmd = build-dependencies.cmd
 	EndProjectSection
 EndProject
 Global
